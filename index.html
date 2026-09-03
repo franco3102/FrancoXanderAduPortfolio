@@ -957,36 +957,11 @@
                             </a>
                         </li>
 
-                        <li class="project-item active" data-filter-item data-category="applications">
-                            <a href="javascript:void(0);" onclick="openImage('./assets/images/project-8.jpg')">
-                                <figure class="project-img">
-                                    <div class="project-item-icon-box"><ion-icon name="eye-outline"></ion-icon></div>
-                                    <img src="./assets/images/project-8.jpg" alt="task manager" loading="lazy">
-                                </figure>
-                                <h3 class="project-title">Task Manager</h3>
-                                <p class="project-category">Applications</p>
-                            </a>
-                        </li>
-
-                        <li class="project-item active" data-filter-item data-category="web development">
-                            <a href="javascript:void(0);" onclick="openImage('./assets/images/project-9.png')">
-                                <figure class="project-img">
-                                    <div class="project-item-icon-box"><ion-icon name="eye-outline"></ion-icon></div>
-                                    <img src="./assets/images/project-9.png" alt="arrival" loading="lazy">
-                                </figure>
-                                <h3 class="project-title">Arrival</h3>
-                                <p class="project-category">Web development</p>
-                            </a>
-                        </li>
-
                     </ul>
 
                 </section>
 
             </article>
-
-
-
 
 
             <!--
@@ -1029,6 +1004,9 @@
                                 </div>
 
                             </a>
+
+
+
                         </li>
 
                         <li class="blog-post-item">
@@ -1178,9 +1156,6 @@
             </article>
 
 
-
-
-
             <!--
               - #CONTACT
             -->
@@ -1231,18 +1206,11 @@
     <!--
       - custom open close image
     -->
-    <!-- Ditaruh sebelum tag penutup </body> -->
-    <!-- IMAGE MODAL -->
     <div id="imageModal" class="image-modal">
-
-        <button class="close-image" type="button" onclick="closeImage()" aria-label="Close">
-            &times;
-        </button>
-
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <img id="modalImage" src="" alt="Project Preview">
+        <button class="close-image" onclick="closeImage()">&times;</button>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Preview">
         </div>
-
     </div>
 
     <!--

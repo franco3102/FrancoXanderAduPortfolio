@@ -158,141 +158,37 @@ for (let i = 0; i < navigationLinks.length; i++) {
   });
 }
 
-// ================================
-// IMAGE PORTFOLIO MODAL
-// ================================
-
+// OPEN MODAL
 window.openImage = function (imageSrc) {
-
     const modal = document.getElementById("imageModal");
     const modalImg = document.getElementById("modalImage");
 
     if (!modal || !modalImg) return;
 
-    // Set gambar
     modalImg.src = imageSrc;
-
-    // Tampilkan modal
     modal.classList.add("active");
-
-    // Lock scroll
-    document.body.classList.add("modal-open");
-
-    // Pastikan layout mengikuti ukuran layar terbaru
-    requestAnimationFrame(() => {
-        resizeModalImage();
-    });
+    document.body.classList.add("modal-active");
 };
 
-
-// ================================
 // CLOSE MODAL
-// ================================
-
 window.closeImage = function () {
-
     const modal = document.getElementById("imageModal");
-
     if (!modal) return;
 
     modal.classList.remove("active");
+    document.body.classList.remove("modal-active");
 
-    // Kembalikan scroll
-    document.body.classList.remove("modal-open");
-
-    // Hapus source setelah animasi selesai
     setTimeout(() => {
-
         const modalImg = document.getElementById("modalImage");
-
-        if (modalImg) {
-            modalImg.src = "";
-        }
-
-    }, 250);
+        if (modalImg) modalImg.src = "";
+    }, 200);
 };
 
-
-// ================================
-// RESPONSIVE IMAGE
-// ================================
-
-function resizeModalImage() {
-
-    const modal = document.getElementById("imageModal");
-    const modalImg = document.getElementById("modalImage");
-
-    if (!modal || !modalImg) return;
-
-    if (!modal.classList.contains("active")) return;
-
-    // Ukuran viewport terbaru
-    const viewportWidth = window.visualViewport
-        ? window.visualViewport.width
-        : window.innerWidth;
-
-    const viewportHeight = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight;
-
-    // Beri jarak dari tepi layar
-    const horizontalPadding = 32;
-    const verticalPadding = 80;
-
-    const maxWidth = viewportWidth - horizontalPadding;
-    const maxHeight = viewportHeight - verticalPadding;
-
-    modalImg.style.maxWidth = `${maxWidth}px`;
-    modalImg.style.maxHeight = `${maxHeight}px`;
-}
-
-
-// ================================
-// JIKA UKURAN WINDOW BERUBAH
-// ================================
-
-window.addEventListener("resize", resizeModalImage);
-
-window.addEventListener("orientationchange", () => {
-
-    setTimeout(() => {
-        resizeModalImage();
-    }, 100);
-
+// CLOSE VIA ESC & KLIK OUTSIDE
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeImage();
 });
 
-
-// Untuk browser mobile
-if (window.visualViewport) {
-
-    window.visualViewport.addEventListener("resize", () => {
-        resizeModalImage();
-    });
-
-}
-
-
-// ================================
-// ESC UNTUK CLOSE
-// ================================
-
-document.addEventListener("keydown", function (event) {
-
-    if (event.key === "Escape") {
-        closeImage();
-    }
-
-});
-
-
-// ================================
-// KLIK AREA LUAR GAMBAR
-// ================================
-
-document.getElementById("imageModal")?.addEventListener("click", function (event) {
-
-    if (event.target === this) {
-        closeImage();
-    }
-
+document.addEventListener("click", (e) => {
+    if (e.target.id === "imageModal") closeImage();
 });
