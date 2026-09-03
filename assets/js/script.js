@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // OPSI 1: KIRIM KE WHATSAPP (UTAMA)
             // ==========================================
             // Ganti dengan nomor WhatsApp tujuan (Gunakan kode negara 62, contoh: 628123456789)
-            const phoneNumber = "6281234567890";
+            const phoneNumber = "6282145690869";
 
             const name = document.getElementById("fullname").value;
             const email = document.getElementById("email").value;
