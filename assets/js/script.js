@@ -192,3 +192,45 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("click", (e) => {
     if (e.target.id === "imageModal") closeImage();
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const contactForm = document.getElementById("contactForm");
+
+    if (contactForm) {
+        contactForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // Mencegah reload halaman
+
+            // ==========================================
+            // OPSI 1: KIRIM KE WHATSAPP (UTAMA)
+            // ==========================================
+            // Ganti dengan nomor WhatsApp tujuan (Gunakan kode negara 62, contoh: 628123456789)
+            const phoneNumber = "6281234567890";
+
+            const name = document.getElementById("fullname").value;
+            const email = document.getElementById("email").value;
+            const message = document.getElementById("message").value;
+
+            // Format isi pesan
+            const formattedText = `Halo, nama saya *${name}* (${email}).\n\nPesan:\n${message}`;
+            const encodedText = encodeURIComponent(formattedText);
+
+            // Buka WhatsApp di tab baru
+            window.open(`https://wa.me/${phoneNumber}?text=${encodedText}`, "_blank");
+
+
+            /* 
+            ==========================================
+            OPSI 2: KIRIM KE EMAIL (OPSIONAL)
+            ==========================================
+            Jika Anda ingin mengalihkan ke Email (aplikasi Gmail/Outlook) sebagai ganti WhatsApp, 
+            hapus tanda komentar di bawah dan beri komentar pada Opsi 1 di atas.
+
+            const targetEmail = "emailanda@domain.com";
+            const subject = encodeURIComponent(`Pesan dari ${name}`);
+            const body = encodeURIComponent(`Nama: ${name}\nEmail: ${email}\n\nPesan:\n${message}`);
+
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+            */
+        });
+    }
+});
