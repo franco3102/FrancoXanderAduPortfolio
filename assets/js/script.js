@@ -159,16 +159,28 @@ for (let i = 0; i < navigationLinks.length; i++) {
 }
 
 
+// Fungsi untuk membuka modal gambar
 function openImage(imageSrc) {
     const modal = document.getElementById("imageModal");
-    const modalImage = document.getElementById("modalImage");
+    const modalImg = document.getElementById("modalImage");
 
-    modalImage.src = imageSrc;
-    modal.style.display = "flex";
+    if (modal && modalImg) {
+        modalImg.src = imageSrc;
+        modal.classList.add("active");
+    }
 }
 
+// Fungsi untuk menutup modal gambar
 function closeImage() {
     const modal = document.getElementById("imageModal");
-
-    modal.style.display = "none";
+    if (modal) {
+        modal.classList.remove("active");
+    }
 }
+
+// Opsional: Tutup modal saat menekan tombol 'ESC' di keyboard
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+        closeImage();
+    }
+});

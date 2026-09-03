@@ -890,6 +890,7 @@ main {
   #PORTFOLIO
 \*-----------------------------------*/
 
+/* Filter Select (Tampilan Mobile Dropdown) */
 .filter-list {
     display: none;
 }
@@ -911,6 +912,7 @@ main {
     border-radius: 14px;
     font-size: var(--fs-6);
     font-weight: var(--fw-300);
+    cursor: pointer;
 }
 
     .filter-select.active .select-icon {
@@ -925,7 +927,7 @@ main {
     padding: 6px;
     border: 1px solid var(--jet);
     border-radius: 14px;
-    z-index: 2;
+    z-index: 10;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -946,18 +948,26 @@ main {
     text-transform: capitalize;
     width: 100%;
     padding: 8px 10px;
+    border: none;
     border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-1, 0.2s ease);
 }
 
     .select-item button:hover {
-        --eerie-black-2: hsl(240, 2%, 20%);
+        background: hsl(240, 2%, 20%);
     }
 
+/* Grid Daftar Proyek */
 .project-list {
     display: grid;
-    grid-template-columns: 1fr;
+    /* Otomatis membagi kolom di layar lebar tanpa merusak tampilan HP */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 30px;
     margin-bottom: 10px;
+    padding: 0;
+    list-style: none;
 }
 
 .project-item {
@@ -972,17 +982,22 @@ main {
 @keyframes scaleUp {
     0% {
         transform: scale(0.5);
+        opacity: 0;
     }
 
     100% {
         transform: scale(1);
+        opacity: 1;
     }
 }
 
 .project-item > a {
+    display: block;
     width: 100%;
+    text-decoration: none;
 }
 
+/* Bingkai & Gambar Proyek */
 .project-img {
     position: relative;
     width: 100%;
@@ -1001,7 +1016,7 @@ main {
         height: 100%;
         background: transparent;
         z-index: 1;
-        transition: var(--transition-1);
+        transition: var(--transition-1, 0.25s ease);
     }
 
 .project-item > a:hover .project-img::before {
@@ -1020,8 +1035,11 @@ main {
     padding: 18px;
     border-radius: 12px;
     opacity: 0;
-    z-index: 1;
-    transition: var(--transition-1);
+    z-index: 2; /* Dinaikkan ke z-index 2 agar ikon berada di atas overlay transparan */
+    transition: var(--transition-1, 0.25s ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .project-item > a:hover .project-item-icon-box {
@@ -1037,7 +1055,8 @@ main {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: var(--transition-1);
+    display: block;
+    transition: var(--transition-1, 0.25s ease);
 }
 
 .project-item > a:hover img {
@@ -1063,6 +1082,36 @@ main {
     font-weight: var(--fw-300);
 }
 
+/* Responsif: Tampilan Menu Filter Tambahan untuk Layar Desktop (>= 768px) */
+@media (min-width: 768px) {
+    .filter-select-box {
+        display: none;
+    }
+
+    .filter-list {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 25px;
+        padding-left: 10px;
+        margin-bottom: 30px;
+        list-style: none;
+    }
+
+    .filter-item button {
+        color: var(--light-gray);
+        font-size: var(--fs-5);
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: color var(--transition-1, 0.2s ease);
+    }
+
+        .filter-item button:hover,
+        .filter-item button.active {
+            color: var(--orange-yellow-crayola);
+        }
+}
 
 /*-----------------------------------*\
   #BLOG
@@ -1697,38 +1746,63 @@ textarea.form-input {
         grid-template-columns: repeat(3, 1fr);
     }
 
+    /* Styling Modal Popup Gambar */
     .image-modal {
-        display: none;
         position: fixed;
-        z-index: 9999;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.85);
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(5px); /* Efek blur pada background */
+        display: flex;
         justify-content: center;
         align-items: center;
-        padding: 20px;
+        z-index: 9999; /* Memastikan modal selalu di paling depan */
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
     }
 
-        .image-modal img {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 10px;
-            object-fit: contain;
-            animation: zoomIn 0.3s ease;
-        }
+    /* Ketiika Modal Aktif */
+    .image-modal.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: all;
+    }
 
+    /* Gambar di dalam Modal */
+    .image-modal img {
+        max-width: 90%;
+        max-height: 80vh;
+        border-radius: 12px;
+        object-fit: contain;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+    }
+
+    .image-modal.active img {
+        transform: scale(1);
+    }
+
+    /* Tombol Close (X) */
     .close-image {
         position: absolute;
         top: 20px;
-        right: 35px;
-        color: white;
-        font-size: 45px;
+        right: 30px;
+        color: #ffffff;
+        font-size: 40px;
         font-weight: bold;
         cursor: pointer;
+        user-select: none;
+        transition: color 0.2s ease;
     }
 
-        .close-image:hover {
-            color: #ccc;
-        }
+    .close-image:hover {
+        color: var(--orange-yellow-crayola, #ffdb70);
+    }
 
     @keyframes zoomIn {
         from {
