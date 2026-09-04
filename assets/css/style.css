@@ -1205,6 +1205,17 @@ main {
     line-height: 1.6;
 }
 
+/*-----------------------------------*\
+  #Services
+\*-----------------------------------*/
+
+/* Mengubah warna teks di bagian Services menjadi putih */
+.services .article-title,
+.services .service-title,
+.services .service-item-title,
+.services .service-text {
+    color: #ffffff !important;
+}
 
 /*-----------------------------------*\
   #CONTACT

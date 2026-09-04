@@ -17,41 +17,52 @@ sidebarBtn.addEventListener("click", function () { elementToggleFunc(sidebar); }
 
 
 // testimonials variables
-const testimonialsItem = document.querySelectorAll("[data-testimonials-item]");
+// JavaScript untuk membuat popup modal dinamis
 const modalContainer = document.querySelector("[data-modal-container]");
 const modalCloseBtn = document.querySelector("[data-modal-close-btn]");
 const overlay = document.querySelector("[data-overlay]");
 
-// modal variable
+// Elemen penampung modal
 const modalImg = document.querySelector("[data-modal-img]");
 const modalTitle = document.querySelector("[data-modal-title]");
+const modalDate = document.querySelector("[data-modal-date]");
 const modalText = document.querySelector("[data-modal-text]");
 
-// modal toggle function
-const testimonialsModalFunc = function () {
-  modalContainer.classList.toggle("active");
-  overlay.classList.toggle("active");
-}
+// Daftar item testimonial
+const testimonialsItem = document.querySelectorAll("[data-testimonials-item]");
 
-// add click event to all modal items
-for (let i = 0; i < testimonialsItem.length; i++) {
+// Fungsi toggle status modal
+const toggleModal = function () {
+    modalContainer.classList.toggle("active");
+    overlay.classList.toggle("active");
+};
 
-  testimonialsItem[i].addEventListener("click", function () {
+// Event click untuk setiap testimonial item
+testimonialsItem.forEach((item) => {
+    item.addEventListener("click", function () {
+        const avatar = this.querySelector("[data-testimonials-avatar]");
+        const title = this.querySelector("[data-testimonials-title]");
+        const date = this.querySelector("[data-testimonials-date]");
+        const text = this.querySelector("[data-testimonials-text]");
 
-    modalImg.src = this.querySelector("[data-testimonials-avatar]").src;
-    modalImg.alt = this.querySelector("[data-testimonials-avatar]").alt;
-    modalTitle.innerHTML = this.querySelector("[data-testimonials-title]").innerHTML;
-    modalText.innerHTML = this.querySelector("[data-testimonials-text]").innerHTML;
+        modalImg.src = avatar.src;
+        modalImg.alt = avatar.alt;
+        modalTitle.innerHTML = title.innerHTML;
 
-    testimonialsModalFunc();
+        if (date) {
+            modalDate.innerHTML = date.innerHTML;
+            modalDate.setAttribute("datetime", date.getAttribute("datetime"));
+        }
 
-  });
+        modalText.innerHTML = text.innerHTML;
 
-}
+        toggleModal();
+    });
+});
 
-// add click event to modal close button
-modalCloseBtn.addEventListener("click", testimonialsModalFunc);
-overlay.addEventListener("click", testimonialsModalFunc);
+// Event close modal (tombol close dan overlay)
+modalCloseBtn.addEventListener("click", toggleModal);
+overlay.addEventListener("click", toggleModal);
 
 
 
@@ -234,3 +245,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
+
+//Service to contact
+const contactLink = document.querySelector('a[href="#contact"]');
+
+if (contactLink) {
+    contactLink.addEventListener("click", function () {
+        const contactNavBtn = document.querySelector('[data-nav-link="contact"]') ||
+            document.querySelector('button[data-nav-link]:nth-child(4)'); // sesuaikan dengan urutan tombol navbar contact
+        if (contactNavBtn) {
+            contactNavBtn.click();
+        }
+    });
+}
