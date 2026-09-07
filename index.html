@@ -2,27 +2,27 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Franco Xander - Personal Portfolio</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franco Xander - Personal Portfolio</title>
 
-  <!--
-    - favicon
-  -->
-  <link rel="shortcut icon" href="./assets/images/logo.ico" type="image/x-icon">
+    <!--
+      - favicon
+    -->
+    <link rel="shortcut icon" href="./assets/images/logo.ico" type="image/x-icon">
 
-  <!--
-    - custom css link
-  -->
-  <link rel="stylesheet" href="./assets/css/style.css">
+    <!--
+      - custom css link
+    -->
+    <link rel="stylesheet" href="./assets/css/style.css">
 
-  <!--
-    - google font link
-  -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!--
+      - google font link
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -196,6 +196,18 @@
                         <button class="navbar-link" data-nav-link>Contact</button>
                     </li>
 
+                    <li class="navbar-item">
+                        <button class="navbar-link download-cv-btn"
+                                id="downloadCvBtn"
+                                type="button"
+                                onclick="generatePDF()">
+
+                            <ion-icon name="download-outline"></ion-icon>
+                            <span>Download CV</span>
+
+                        </button>
+                    </li>
+
                 </ul>
 
             </nav>
@@ -294,7 +306,7 @@
                             </div>
 
                             <div class="service-content-box">
-                                <        ="h4 service-item-title">Artificial Intelegence</h4>
+                                <h4 class="h4 service-item-title">Artificial Intelligence</h4>
 
                                 <p class="service-item-text">
                                     I develop intelligent AI solutions, machine learning models, and data-driven systems to solve complex problems efficiently.
@@ -577,7 +589,7 @@
                             <span>2018 — 2024</span>
 
                             <p class="timeline-text">
-                                Studied Information Systems at :contentReference[oaicite:0]{index=0}, Malaysia.
+                                Studied Information Systems at HELP University, Malaysia.
                                 Focused on software development, database systems, and business information systems with additional
                                 specialization in NoSQL databases such as MongoDB. Gained hands-on experience in designing,
                                 managing, and optimizing document-based databases for modern web and enterprise applications
@@ -793,7 +805,6 @@
                             <div class="skill-progress-bg">
                                 <div class="skill-progress-fill" style="width: 80%;"></div>
                             </div>
-                        </li>
                         </li>
 
                         <!-- Databases -->
@@ -1159,17 +1170,13 @@
         </div>
     </div>
 
-    <!--
-      - custom js link
-    -->
-    <script src="./assets/js/script.js"></script>
-
-    <!--
-      - ionicon link
-    -->
+    <!-- Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
+    
+    <!-- Custom JS - cukup SATU kali -->
+    <script src="./assets/js/script.js"></script>
 </body>
 
 </html>
