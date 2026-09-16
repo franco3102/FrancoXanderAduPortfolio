@@ -196,16 +196,40 @@
                         <button class="navbar-link" data-nav-link>Contact</button>
                     </li>
 
-                    <li class="navbar-item">
+                    <li class="navbar-item download-menu-wrapper" data-download-wrapper>
                         <button class="navbar-link download-cv-btn"
                                 id="downloadCvBtn"
                                 type="button"
-                                onclick="generatePDF()">
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                data-download-toggle>
 
                             <ion-icon name="download-outline"></ion-icon>
-                            <span>Download CV</span>
+                            <span>Download</span>
+                            <ion-icon name="chevron-down-outline" class="download-caret"></ion-icon>
 
                         </button>
+
+                        <ul class="download-menu" data-download-menu>
+                            <li>
+                                <button type="button" class="download-menu-item" onclick="generatePDF()">
+                                    <ion-icon name="document-text-outline"></ion-icon>
+                                    <span class="download-menu-item-text">
+                                        <strong>Download CV</strong>
+                                        <small>Profil, pendidikan &amp; pengalaman</small>
+                                    </span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="download-menu-item" onclick="generatePortfolioPDF()">
+                                    <ion-icon name="briefcase-outline"></ion-icon>
+                                    <span class="download-menu-item-text">
+                                        <strong>Download Portfolio</strong>
+                                        <small>Project, demo &amp; link portofolio</small>
+                                    </span>
+                                </button>
+                            </li>
+                        </ul>
                     </li>
 
                 </ul>

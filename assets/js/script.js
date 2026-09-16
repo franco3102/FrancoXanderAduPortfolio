@@ -16,6 +16,68 @@ sidebarBtn.addEventListener("click", function () { elementToggleFunc(sidebar); }
 
 
 
+// =========================================================
+// DOWNLOAD MENU (CV / Portfolio)
+// =========================================================
+
+const downloadWrapper = document.querySelector("[data-download-wrapper]");
+const downloadToggleBtn = document.querySelector("[data-download-toggle]");
+const downloadMenu = document.querySelector("[data-download-menu]");
+
+const closeDownloadMenu = () => {
+
+    if (!downloadWrapper) return;
+
+    downloadWrapper.classList.remove("active");
+    downloadToggleBtn?.setAttribute("aria-expanded", "false");
+
+};
+
+if (downloadWrapper && downloadToggleBtn && downloadMenu) {
+
+    downloadToggleBtn.addEventListener("click", function (event) {
+
+        event.stopPropagation();
+
+        const isOpen = downloadWrapper.classList.toggle("active");
+
+        downloadToggleBtn.setAttribute("aria-expanded", String(isOpen));
+
+    });
+
+    // Tutup menu ketika salah satu pilihan (CV/Portfolio) diklik.
+    downloadMenu.querySelectorAll(".download-menu-item").forEach((item) => {
+
+        item.addEventListener("click", closeDownloadMenu);
+
+    });
+
+    // Tutup menu saat klik di luar area dropdown.
+    document.addEventListener("click", function (event) {
+
+        if (!downloadWrapper.contains(event.target)) {
+
+            closeDownloadMenu();
+
+        }
+
+    });
+
+    // Tutup menu dengan tombol Escape.
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape") {
+
+            closeDownloadMenu();
+
+        }
+
+    });
+
+}
+
+
+
 // testimonials variables
 // JavaScript untuk membuat popup modal dinamis
 const modalContainer = document.querySelector("[data-modal-container]");
@@ -259,6 +321,152 @@ if (contactLink) {
     });
 }
 
+// =========================================================
+// SHARED HELPERS (dipakai oleh generatePDF & generatePortfolioPDF)
+// =========================================================
+
+const escapeHTML = (value) => {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+};
+
+
+const getText = (selector, parent = document) => {
+
+    const element =
+        parent.querySelector(selector);
+
+    return element
+        ? element.textContent.trim()
+        : "";
+
+};
+
+
+// Ubah src (relatif/absolut) menjadi absolute URL berdasarkan halaman saat ini.
+// Ini penting supaya gambar tetap tampil ketika HTML di-render di iframe/tab terpisah
+// (yang punya document.baseURI berbeda dari halaman utama).
+const toAbsoluteURL = (src) => {
+
+    try {
+
+        return new URL(src, document.baseURI).href;
+
+    } catch (error) {
+
+        return src;
+
+    }
+
+};
+
+
+// Jalankan sebuah HTML string di iframe tersembunyi lalu buka dialog print
+// (dari situ user tinggal pilih "Save as PDF" untuk mendownloadnya).
+function printHTMLDocument(html, { frameId, onDone } = {}) {
+
+    document.getElementById(frameId)?.remove();
+
+    const iframe = document.createElement("iframe");
+
+    iframe.id = frameId;
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "210mm";
+    iframe.style.height = "297mm";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    iframe.style.opacity = "0";
+
+    document.body.appendChild(iframe);
+
+    const iframeDocument =
+        iframe.contentDocument ||
+        iframe.contentWindow.document;
+
+    iframeDocument.open();
+    iframeDocument.write(html);
+    iframeDocument.close();
+
+    const doPrint = () => {
+
+        setTimeout(() => {
+
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+
+        }, 500);
+
+    };
+
+    // Tunggu semua gambar selesai load dulu sebelum memicu print,
+    // supaya foto/screenshot tidak hilang di hasil PDF.
+    const images = Array.from(iframeDocument.images || []);
+    const pendingImages = images.filter((img) => !img.complete);
+
+    if (pendingImages.length > 0) {
+
+        let remaining = pendingImages.length;
+
+        const markLoaded = () => {
+
+            remaining -= 1;
+
+            if (remaining <= 0) {
+
+                doPrint();
+
+            }
+
+        };
+
+        pendingImages.forEach((img) => {
+
+            img.addEventListener("load", markLoaded, { once: true });
+            img.addEventListener("error", markLoaded, { once: true });
+
+        });
+
+    }
+
+    else {
+
+        doPrint();
+
+    }
+
+    const cleanup = () => {
+
+        setTimeout(() => {
+
+            iframe.remove();
+
+            if (typeof onDone === "function") {
+
+                onDone();
+
+            }
+
+        }, 300);
+
+    };
+
+    iframe.contentWindow.addEventListener(
+        "afterprint",
+        cleanup,
+        { once: true }
+    );
+
+}
+
+
 function generatePDF() {
 
     const btn = document.getElementById("downloadCvBtn");
@@ -267,41 +475,6 @@ function generatePDF() {
         console.error("Tombol Download CV tidak ditemukan.");
         return;
     }
-
-
-    // =========================================================
-    // REMOVE OLD PRINT FRAME
-    // =========================================================
-
-    document.getElementById("cvPrintFrame")?.remove();
-
-
-    // =========================================================
-    // HELPER
-    // =========================================================
-
-    const escapeHTML = (value) => {
-
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-
-    };
-
-
-    const getText = (selector, parent = document) => {
-
-        const element =
-            parent.querySelector(selector);
-
-        return element
-            ? element.textContent.trim()
-            : "";
-
-    };
 
 
     // =========================================================
@@ -361,8 +534,10 @@ function generatePDF() {
 
 
     const photoSrc =
-        profileImage?.getAttribute("src") ||
-        "./assets/images/protfoliopicture.JPEG";
+        toAbsoluteURL(
+            profileImage?.getAttribute("src") ||
+            "./assets/images/protfoliopicture.JPEG"
+        );
 
 
     // =========================================================
@@ -873,6 +1048,8 @@ function generatePDF() {
 <head>
 
 <meta charset="UTF-8">
+
+<base href="${document.baseURI}">
 
 <title>${escapeHTML(name)} - CV</title>
 
@@ -2479,75 +2656,16 @@ body {
 
 
     // =========================================================
-    // CREATE INVISIBLE IFRAME
-    // =========================================================
-
-    const iframe =
-        document.createElement("iframe");
-
-
-    iframe.id =
-        "cvPrintFrame";
-
-
-    iframe.style.position =
-        "fixed";
-
-    iframe.style.left =
-        "-10000px";
-
-    iframe.style.top =
-        "0";
-
-    iframe.style.width =
-        "210mm";
-
-    iframe.style.height =
-        "297mm";
-
-    iframe.style.border =
-        "0";
-
-    iframe.style.visibility =
-        "hidden";
-
-    iframe.style.opacity =
-        "0";
-
-
-    document.body.appendChild(iframe);
-
-
-    // =========================================================
-    // WRITE CV INTO COMPLETELY SEPARATE DOCUMENT
-    // =========================================================
-
-    const iframeDocument =
-        iframe.contentDocument ||
-        iframe.contentWindow.document;
-
-
-    iframeDocument.open();
-
-    iframeDocument.write(cvHTML);
-
-    iframeDocument.close();
-
-
-    // =========================================================
-    // BUTTON
+    // BUTTON STATE
     // =========================================================
 
     btn.disabled = true;
 
-
     const buttonSpan =
         btn.querySelector("span");
 
-
     const originalButtonText =
         buttonSpan?.textContent;
-
 
     if (buttonSpan) {
 
@@ -2558,85 +2676,1093 @@ body {
 
 
     // =========================================================
-    // PRINT
+    // RENDER & PRINT
     // =========================================================
 
-    const printCV = () => {
+    printHTMLDocument(cvHTML, {
 
-        setTimeout(() => {
+        frameId: "cvPrintFrame",
 
-            iframe.contentWindow.focus();
-
-            iframe.contentWindow.print();
-
-        }, 500);
-
-    };
-
-
-    // =========================================================
-    // WAIT FOR IMAGE
-    // =========================================================
-
-    const img =
-        iframeDocument.querySelector(
-            ".cv-photo"
-        );
-
-
-    if (img && !img.complete) {
-
-        img.onload =
-            printCV;
-
-        img.onerror =
-            printCV;
-
-    }
-
-    else {
-
-        printCV();
-
-    }
-
-
-    // =========================================================
-    // CLEANUP AFTER PRINT
-    // =========================================================
-
-    const cleanup = () => {
-
-        setTimeout(() => {
-
-            iframe.remove();
-
+        onDone: () => {
 
             btn.disabled = false;
 
-
-            if (
-                buttonSpan &&
-                originalButtonText
-            ) {
+            if (buttonSpan && originalButtonText) {
 
                 buttonSpan.textContent =
                     originalButtonText;
 
             }
 
+        }
 
-        }, 300);
+    });
+
+}
+
+
+// =========================================================
+// GENERATE PORTFOLIO (Download Portfolio) — multi-page PDF
+// diambil langsung dari konten website (About, Skills, Resume,
+// Portfolio projects, Testimonials) + link portofolio online.
+// =========================================================
+
+const LIVE_PORTFOLIO_URL = "https://francoxanderadu.netlify.app/";
+const LIVE_PORTFOLIO_LABEL = "Franco Xander - Personal Portfolio";
+
+// Kategori kelompok skill untuk halaman "Technical Skills"
+const SKILL_CATEGORY_MAP = {
+    "php": "Backend & Languages",
+    "laravel": "Backend & Languages",
+    "python": "Backend & Languages",
+    "java": "Backend & Languages",
+    ".net": "Backend & Languages",
+    ".net core": "Backend & Languages",
+    "c++": "Backend & Languages",
+    "node.js": "Backend & Languages",
+    "html5 & css3": "Frontend Development",
+    "javascript": "Frontend Development",
+    "react": "Frontend Development",
+    "mysql": "Database",
+    "postgresql": "Database",
+    "mongodb": "Database",
+    "artificial intelligence (ai)": "AI & Data Science",
+    "machine learning": "AI & Data Science",
+    "deep learning": "AI & Data Science",
+    "data science": "AI & Data Science",
+    "cloud computing": "Tools & Infrastructure"
+};
+
+function generatePortfolioPDF() {
+
+    const btn = document.getElementById("downloadCvBtn");
+
+    if (!btn) {
+        console.error("Tombol Download tidak ditemukan.");
+        return;
+    }
+
+
+    // =========================================================
+    // PERSONAL DATA
+    // =========================================================
+
+    const name =
+        getText(".sidebar .info-content .name") ||
+        "Franco Xander Adu";
+
+    const jobTitle =
+        getText(".sidebar .info-content .title") ||
+        "Full-Stack Developer";
+
+    const emailElement =
+        document.querySelector('.sidebar a[href^="mailto:"]');
+
+    const email =
+        emailElement?.textContent.trim() ||
+        "francoxander1@gmail.com";
+
+    const phoneElement =
+        document.querySelector('.sidebar a[href^="tel:"]');
+
+    const phone =
+        phoneElement?.textContent.trim() ||
+        "+62 82145690869";
+
+    const address =
+        getText(".sidebar address") ||
+        "Denpasar, Bali, Indonesia";
+
+    const profileImage =
+        document.querySelector(".sidebar .avatar-box img");
+
+    const photoSrc =
+        toAbsoluteURL(
+            profileImage?.getAttribute("src") ||
+            "./assets/images/protfoliopicture.JPEG"
+        );
+
+
+    // =========================================================
+    // SOCIAL LINKS
+    // =========================================================
+
+    const socialLinks = [];
+
+    document
+        .querySelectorAll(".sidebar .social-list a")
+        .forEach((link) => {
+
+            const href = link.getAttribute("href");
+
+            if (!href) return;
+
+            let label = "";
+
+            if (href.includes("github")) label = "GitHub";
+            else if (href.includes("linkedin")) label = "LinkedIn";
+            else if (href.includes("instagram")) label = "Instagram";
+            else if (href.includes("facebook")) label = "Facebook";
+
+            if (label) socialLinks.push({ label, href });
+
+        });
+
+    const githubLink = socialLinks.find((item) => item.label === "GitHub");
+    const linkedinLink = socialLinks.find((item) => item.label === "LinkedIn");
+
+
+    // =========================================================
+    // ABOUT ME
+    // =========================================================
+
+    const aboutArticle =
+        document.querySelector('article.about[data-page="about"]');
+
+    let aboutParagraphs = [];
+
+    if (aboutArticle) {
+
+        aboutParagraphs =
+            Array.from(aboutArticle.querySelectorAll(".about-text p"))
+                .map((p) => p.textContent.replace(/\s+/g, " ").trim())
+                .filter(Boolean);
+
+    }
+
+    if (!aboutParagraphs.length) {
+
+        aboutParagraphs = [
+            "I'm Franco Xander Adu, a passionate Web Developer and Technology Enthusiast from Bali, Indonesia."
+        ];
+
+    }
+
+
+    // =========================================================
+    // SKILLS (dikelompokkan per kategori)
+    // =========================================================
+
+    const rawSkills = [];
+
+    document
+        .querySelectorAll(".skills-list .skills-item")
+        .forEach((item) => {
+
+            const skillName =
+                item.querySelector(".h5")?.textContent.trim();
+
+            const data = item.querySelector("data");
+
+            const skillValue =
+                data?.getAttribute("value") || data?.textContent.trim();
+
+            if (skillName) {
+
+                rawSkills.push({
+                    name: skillName,
+                    value: Number(skillValue) || 0
+                });
+
+            }
+
+        });
+
+    const skillGroups = {};
+
+    rawSkills.forEach((skill) => {
+
+        const category =
+            SKILL_CATEGORY_MAP[skill.name.toLowerCase()] || "Other Skills";
+
+        if (!skillGroups[category]) skillGroups[category] = [];
+
+        skillGroups[category].push(skill);
+
+    });
+
+    const skillGroupOrder = [
+        "Backend & Languages",
+        "Frontend Development",
+        "Database",
+        "AI & Data Science",
+        "Tools & Infrastructure",
+        "Other Skills"
+    ];
+
+
+    // =========================================================
+    // RESUME: EDUCATION & EXPERIENCE
+    // =========================================================
+
+    const timelines =
+        document.querySelectorAll(
+            'article.resume[data-page="resume"] .timeline'
+        );
+
+    const parseTimeline = (timelineEl) => {
+
+        const items = [];
+
+        if (!timelineEl) return items;
+
+        timelineEl.querySelectorAll(".timeline-item").forEach((item) => {
+
+            const title =
+                item.querySelector(".timeline-item-title")
+                    ?.textContent.trim() || "";
+
+            const date =
+                item.querySelector("span")?.textContent.trim() || "";
+
+            const description =
+                item.querySelector(".timeline-text")
+                    ?.textContent.replace(/\s+/g, " ").trim() || "";
+
+            if (title) items.push({ title, date, description });
+
+        });
+
+        return items;
 
     };
 
+    const education = parseTimeline(timelines[0]);
+    const experiences = parseTimeline(timelines[1]);
 
-    iframe.contentWindow.addEventListener(
-        "afterprint",
-        cleanup,
+
+    // =========================================================
+    // PORTFOLIO PROJECTS (dari section Portfolio)
+    // =========================================================
+
+    const projectItems =
+        document.querySelectorAll(
+            'article.portfolio[data-page="portfolio"] .project-list .project-item'
+        );
+
+    const allProjects = [];
+
+    projectItems.forEach((item) => {
+
+        const image = item.querySelector(".project-img img");
+
+        const title =
+            item.querySelector(".project-title")?.textContent.trim() || "";
+
+        const category =
+            item.querySelector(".project-category")?.textContent.trim() || "";
+
+        if (!title) return;
+
+        allProjects.push({
+            image: image ? toAbsoluteURL(image.getAttribute("src")) : "",
+            title,
+            category
+        });
+
+    });
+
+    const findProject = (keyword) =>
+        allProjects.find((p) =>
+            p.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+
+    // =========================================================
+    // TESTIMONIALS (dipakai sebagai sumber deskripsi project)
+    // =========================================================
+
+    const testimonials = [];
+
+    document
+        .querySelectorAll(".testimonials-list .testimonials-item")
+        .forEach((item) => {
+
+            const title =
+                item.querySelector(".testimonials-item-title")
+                    ?.textContent.trim() || "";
+
+            const text =
+                item.querySelector(".testimonials-text")
+                    ?.textContent.replace(/\s+/g, " ").trim() || "";
+
+            if (title) testimonials.push({ title, text });
+
+        });
+
+    const findTestimonial = (keyword) =>
+        testimonials.find((t) =>
+            t.title.toLowerCase().includes(keyword.toLowerCase()) ||
+            t.text.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+
+    // =========================================================
+    // KURASI 3 PROJECT UTAMA
+    // =========================================================
+
+    const posProject = findProject("TM Facial Glow");
+    const posTestimonial = findTestimonial("TM Facial Glow") || findTestimonial("Gustu Adi");
+
+    const erpProject = findProject("Data Pegawai Perpustakaan") || findProject("Perpustakaan");
+    const erpTestimonial = findTestimonial("Perpustakaan Kota Kupang") || findTestimonial("ARPEGAMUS");
+    const erpGeneralTestimonial = findTestimonial("Out Of Asia") || findTestimonial("Graha Prima Agung");
+
+    const sawitProject = findProject("Sawit");
+
+    const featuredProjects = [
+
         {
-            once: true
+            pageLabel: "PROJECT 1",
+            title: posProject?.title || "POS Klinik Kecantikan TM Facial Glow",
+            image: posProject?.image || "",
+            description:
+                posTestimonial?.text ||
+                "Membangun sistem Point of Sale (POS) untuk klinik kecantikan TM Facial Glow, mencakup transaksi penjualan, data pelanggan, penjadwalan treatment, dan pelacakan layanan di 12 cabang.",
+            technology:
+                posProject?.category?.replace(/^Web Development\s*[•·]?\s*/i, "") ||
+                "HTML, CSS, JavaScript, PHP, Laravel",
+            features: [
+                "Manajemen transaksi penjualan multi-cabang",
+                "Pengelolaan data & riwayat pelanggan",
+                "Penjadwalan dan pelacakan layanan/treatment",
+                "Laporan keuangan & manajemen karyawan",
+                "Kontrol stok/inventori produk klinik"
+            ]
+        },
+
+        {
+            pageLabel: "PROJECT 2",
+            title: erpProject?.title
+                ? `${erpProject.title} (ERP / Business Application)`
+                : "ARPEGAMUS — Employee Data & ERP System",
+            image: erpProject?.image || "",
+            description:
+                [erpTestimonial?.text, erpGeneralTestimonial?.text]
+                    .filter(Boolean)
+                    .join(" ") ||
+                "Merancang dan mengembangkan sistem ERP serta aplikasi manajemen data internal untuk mendukung proses bisnis, pengelolaan data kepegawaian, dan pelaporan yang lebih efisien.",
+            technology:
+                erpProject?.category?.replace(/^Web Development\s*[•·]?\s*/i, "") ||
+                "PHP, Laravel, MySQL",
+            features: [
+                "Digitalisasi & strukturisasi data kepegawaian",
+                "Otomatisasi proses bisnis inti (core business process)",
+                "Manajemen inventori, order, dan logistik gudang",
+                "Data real-time untuk pengambilan keputusan",
+                "Peningkatan efisiensi alur kerja operasional tim"
+            ]
+        },
+
+        {
+            pageLabel: "PROJECT 3",
+            title: sawitProject?.title
+                ? `SawitPro — ${sawitProject.title}`
+                : "SawitPro — POS Sawit Muda Maju Jaya Koperasi",
+            image: sawitProject?.image || "",
+            description:
+                "Mengembangkan sistem Point of Sale (POS) untuk Koperasi Sawit Muda Maju Jaya, digunakan untuk mencatat transaksi penjualan hasil sawit anggota koperasi secara digital, rapi, dan mudah dilacak.",
+            technology:
+                sawitProject?.category?.replace(/^Web Development\s*[•·]?\s*/i, "") ||
+                "HTML, CSS, JavaScript, PHP, Laravel, MySQL",
+            features: [
+                "Pencatatan transaksi penjualan hasil sawit",
+                "Manajemen data anggota koperasi",
+                "Riwayat & rekap transaksi otomatis",
+                "Laporan penjualan berbasis database MySQL",
+                "Antarmuka sederhana untuk operator koperasi"
+            ]
         }
-    );
+
+    ];
+
+
+    // =========================================================
+    // ONGOING PROJECT (info dari pemilik portofolio)
+    // =========================================================
+
+    const ongoingProject = {
+        title: "Tidura App",
+        description:
+            "Project yang sedang dikerjakan saat ini: aplikasi POS (Point of Sale) dan ERP berbasis Tidura App, dibangun menggunakan React.js untuk frontend yang cepat, responsif, dan modern."
+    };
+
+
+    // =========================================================
+    // HTML BUILDERS
+    // =========================================================
+
+    const skillGroupsHTML = skillGroupOrder
+        .filter((group) => skillGroups[group]?.length)
+        .map((group) => `
+            <div class="skill-group">
+                <h3 class="skill-group-title">${escapeHTML(group)}</h3>
+                ${skillGroups[group].map((skill) => `
+                    <div class="skill-row">
+                        <div class="skill-row-top">
+                            <span>${escapeHTML(skill.name)}</span>
+                            <strong>${skill.value}%</strong>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-bar-fill" style="width:${skill.value}%"></div>
+                        </div>
+                    </div>
+                `).join("")}
+            </div>
+        `).join("");
+
+    const educationHTML = education.map((item) => `
+        <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+                <div class="tl-title-row">
+                    <h4>${escapeHTML(item.title)}</h4>
+                    <span class="tl-date">${escapeHTML(item.date)}</span>
+                </div>
+                ${item.description ? `<p>${escapeHTML(item.description)}</p>` : ""}
+            </div>
+        </div>
+    `).join("");
+
+    const experienceHTML = experiences.map((item) => `
+        <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+                <div class="tl-title-row">
+                    <h4>${escapeHTML(item.title)}</h4>
+                    <span class="tl-date">${escapeHTML(item.date)}</span>
+                </div>
+                ${item.description ? `<p>${escapeHTML(item.description)}</p>` : ""}
+            </div>
+        </div>
+    `).join("");
+
+    const buildProjectPage = (project) => `
+        <section class="pf-page">
+
+            <div class="page-kicker">${escapeHTML(project.pageLabel)}</div>
+            <h2 class="page-title">${escapeHTML(project.title)}</h2>
+            <div class="title-underline"></div>
+
+            ${project.image ? `
+            <div class="project-hero">
+                <img src="${escapeHTML(project.image)}" alt="${escapeHTML(project.title)}">
+            </div>
+            ` : ""}
+
+            <h3 class="block-heading">Deskripsi</h3>
+            <p class="body-text">${escapeHTML(project.description)}</p>
+
+            <h3 class="block-heading">Teknologi</h3>
+            <div class="tag-row">
+                ${project.technology.split(",").map((tech) => `
+                    <span class="tag-chip">${escapeHTML(tech.trim())}</span>
+                `).join("")}
+            </div>
+
+            <h3 class="block-heading">Fitur Utama</h3>
+            <ul class="feature-list">
+                ${project.features.map((f) => `<li>${escapeHTML(f)}</li>`).join("")}
+            </ul>
+
+            <div class="pf-footer">
+                ${escapeHTML(name)} &bull; Portfolio Document &bull; ${escapeHTML(LIVE_PORTFOLIO_URL)}
+            </div>
+
+        </section>
+    `;
+
+
+    // =========================================================
+    // FULL DOCUMENT
+    // =========================================================
+
+    const portfolioHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<base href="${document.baseURI}">
+<title>${escapeHTML(name)} - Portfolio</title>
+
+<style>
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 210mm;
+    background: #ffffff;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1e293b;
+}
+
+@page { size: A4; margin: 0; }
+
+.pf-page {
+    position: relative;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm 16mm 14mm 16mm;
+    background: #ffffff;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+}
+
+.pf-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+}
+
+.page-kicker {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 6px;
+}
+
+.page-title {
+    font-size: 22px;
+    color: #111827;
+    margin: 0 0 8px 0;
+}
+
+.title-underline {
+    width: 50px;
+    height: 3px;
+    background: #2563eb;
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+
+.block-heading {
+    font-size: 12.5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #2563eb;
+    font-weight: 700;
+    margin: 20px 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.body-text {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #334155;
+    margin: 0;
+}
+
+.pf-footer {
+    position: absolute;
+    left: 16mm;
+    right: 16mm;
+    bottom: 10mm;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 8.5px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+/* ---------------- COVER ---------------- */
+
+.cover-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 297mm;
+}
+
+.cover-photo {
+    width: 120px;
+    height: 140px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid #2563eb;
+    margin-bottom: 22px;
+    background: #f1f5f9;
+}
+
+.cover-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cover-name {
+    font-size: 30px;
+    color: #111827;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+}
+
+.cover-title {
+    font-size: 14px;
+    color: #2563eb;
+    font-weight: 600;
+    margin: 0 0 22px 0;
+    letter-spacing: 0.5px;
+}
+
+.cover-line {
+    width: 60px;
+    height: 3px;
+    background: #2563eb;
+    border-radius: 2px;
+    margin-bottom: 22px;
+}
+
+.cover-contact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.cover-chip {
+    font-size: 10.5px;
+    color: #1e293b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 7px 14px;
+    text-decoration: none;
+}
+
+.cover-doc-label {
+    margin-top: 30px;
+    font-size: 10.5px;
+    letter-spacing: 4px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+/* ---------------- ABOUT / TEXT PAGES ---------------- */
+
+.body-text + .body-text { margin-top: 12px; }
+
+/* ---------------- SKILLS ---------------- */
+
+.skill-group { margin-bottom: 18px; }
+
+.skill-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 10px 0;
+}
+
+.skill-row { margin-bottom: 10px; }
+
+.skill-row-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #334155;
+    margin-bottom: 4px;
+}
+
+.skill-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.skill-bar-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 4px;
+}
+
+/* ---------------- PROJECT PAGES ---------------- */
+
+.project-hero {
+    width: 100%;
+    height: 82mm;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    margin-bottom: 6px;
+}
+
+.project-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-chip {
+    font-size: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    padding: 5px 11px;
+    font-weight: 600;
+}
+
+.feature-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 11.5px;
+    color: #334155;
+    line-height: 1.9;
+}
+
+/* ---------------- TIMELINE (Experience) ---------------- */
+
+.tl-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.tl-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+
+.tl-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tl-title-row h4 {
+    margin: 0;
+    font-size: 12.5px;
+    color: #111827;
+}
+
+.tl-date {
+    font-size: 10px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.tl-body p {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.ongoing-box {
+    margin-top: 6px;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.ongoing-box .ongoing-tag {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #2563eb;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    padding: 3px 8px;
+    margin-bottom: 8px;
+}
+
+.ongoing-box h4 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    color: #111827;
+}
+
+.ongoing-box p {
+    margin: 0;
+    font-size: 11.5px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+/* ---------------- ONLINE PORTFOLIO ---------------- */
+
+.link-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    background: #f8fafc;
+}
+
+.link-card-text strong {
+    display: block;
+    font-size: 12.5px;
+    color: #111827;
+    margin-bottom: 3px;
+}
+
+.link-card-text span {
+    font-size: 10.5px;
+    color: #64748b;
+    word-break: break-all;
+}
+
+.link-card-btn {
+    display: inline-block;
+    background: #2563eb;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+@media print {
+
+    html, body {
+        width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .pf-page {
+        width: 210mm !important;
+        background: #ffffff !important;
+    }
+
+}
+
+</style>
+
+</head>
+<body>
+
+<!-- =====================================================
+     PAGE 1 — COVER
+====================================================== -->
+
+<section class="pf-page cover-page">
+
+    <div class="cover-photo">
+        <img src="${escapeHTML(photoSrc)}" alt="${escapeHTML(name)}">
+    </div>
+
+    <h1 class="cover-name">${escapeHTML(name)}</h1>
+    <p class="cover-title">${escapeHTML(jobTitle)} / Software Engineer</p>
+
+    <div class="cover-line"></div>
+
+    <div class="cover-contact">
+        <span class="cover-chip">${escapeHTML(email)}</span>
+        <span class="cover-chip">${escapeHTML(phone)}</span>
+        ${linkedinLink ? `<a class="cover-chip" href="${escapeHTML(linkedinLink.href)}" target="_blank" rel="noopener">LinkedIn</a>` : ""}
+    </div>
+
+    <div class="cover-contact">
+        <span class="cover-chip">${escapeHTML(address)}</span>
+    </div>
+
+    <div class="cover-doc-label">Portfolio Document</div>
+
+</section>
+
+<!-- =====================================================
+     PAGE 2 — ABOUT ME
+====================================================== -->
+
+<section class="pf-page">
+
+    <div class="page-kicker">ABOUT</div>
+    <h2 class="page-title">About Me</h2>
+    <div class="title-underline"></div>
+
+    ${aboutParagraphs.map((p) => `<p class="body-text">${escapeHTML(p)}</p>`).join("")}
+
+    <div class="pf-footer">
+        ${escapeHTML(name)} &bull; Portfolio Document &bull; ${escapeHTML(LIVE_PORTFOLIO_URL)}
+    </div>
+
+</section>
+
+<!-- =====================================================
+     PAGE 3 — TECHNICAL SKILLS
+====================================================== -->
+
+<section class="pf-page">
+
+    <div class="page-kicker">SKILLS</div>
+    <h2 class="page-title">Technical Skills</h2>
+    <div class="title-underline"></div>
+
+    ${skillGroupsHTML}
+
+    <div class="pf-footer">
+        ${escapeHTML(name)} &bull; Portfolio Document &bull; ${escapeHTML(LIVE_PORTFOLIO_URL)}
+    </div>
+
+</section>
+
+<!-- =====================================================
+     PAGE 4-6 — FEATURED PROJECTS
+====================================================== -->
+
+${featuredProjects.map(buildProjectPage).join("")}
+
+<!-- =====================================================
+     PAGE 7 — EXPERIENCE / PROJECTS
+====================================================== -->
+
+<section class="pf-page">
+
+    <div class="page-kicker">EXPERIENCE</div>
+    <h2 class="page-title">Experience &amp; Projects</h2>
+    <div class="title-underline"></div>
+
+    <h3 class="block-heading">Professional Experience</h3>
+    ${experienceHTML || `<p class="body-text">-</p>`}
+
+    <h3 class="block-heading">Education</h3>
+    ${educationHTML || `<p class="body-text">-</p>`}
+
+    <h3 class="block-heading">Currently Working On</h3>
+    <div class="ongoing-box">
+        <span class="ongoing-tag">IN DEVELOPMENT</span>
+        <h4>${escapeHTML(ongoingProject.title)}</h4>
+        <p>${escapeHTML(ongoingProject.description)}</p>
+    </div>
+
+    <div class="pf-footer">
+        ${escapeHTML(name)} &bull; Portfolio Document &bull; ${escapeHTML(LIVE_PORTFOLIO_URL)}
+    </div>
+
+</section>
+
+<!-- =====================================================
+     PAGE 8 — ONLINE PORTFOLIO
+====================================================== -->
+
+<section class="pf-page">
+
+    <div class="page-kicker">ONLINE PORTFOLIO</div>
+    <h2 class="page-title">Lihat Selengkapnya Secara Online</h2>
+    <div class="title-underline"></div>
+
+    <p class="body-text">
+        Dokumen ini adalah ringkasan portofolio. Untuk demo interaktif, detail teknis lebih lengkap,
+        dan project terbaru, silakan kunjungi link berikut:
+    </p>
+
+    <div style="margin-top: 20px;">
+
+        <div class="link-card">
+            <div class="link-card-text">
+                <strong>${escapeHTML(LIVE_PORTFOLIO_LABEL)}</strong>
+                <span>${escapeHTML(LIVE_PORTFOLIO_URL)}</span>
+            </div>
+            <a class="link-card-btn" href="${escapeHTML(LIVE_PORTFOLIO_URL)}" target="_blank" rel="noopener">Buka Portfolio</a>
+        </div>
+
+        ${githubLink ? `
+        <div class="link-card">
+            <div class="link-card-text">
+                <strong>GitHub</strong>
+                <span>${escapeHTML(githubLink.href)}</span>
+            </div>
+            <a class="link-card-btn" href="${escapeHTML(githubLink.href)}" target="_blank" rel="noopener">Buka GitHub</a>
+        </div>
+        ` : ""}
+
+        ${linkedinLink ? `
+        <div class="link-card">
+            <div class="link-card-text">
+                <strong>LinkedIn</strong>
+                <span>${escapeHTML(linkedinLink.href)}</span>
+            </div>
+            <a class="link-card-btn" href="${escapeHTML(linkedinLink.href)}" target="_blank" rel="noopener">Buka LinkedIn</a>
+        </div>
+        ` : ""}
+
+    </div>
+
+    <div class="pf-footer">
+        ${escapeHTML(name)} &bull; Portfolio Document &bull; ${escapeHTML(LIVE_PORTFOLIO_URL)}
+    </div>
+
+</section>
+
+</body>
+</html>
+
+`;
+
+
+    // =========================================================
+    // BUTTON STATE
+    // =========================================================
+
+    btn.disabled = true;
+
+    const buttonSpan = btn.querySelector("span");
+    const originalButtonText = buttonSpan?.textContent;
+
+    if (buttonSpan) {
+
+        buttonSpan.textContent = "Preparing Portfolio...";
+
+    }
+
+
+    // =========================================================
+    // RENDER & PRINT
+    // =========================================================
+
+    printHTMLDocument(portfolioHTML, {
+
+        frameId: "portfolioPrintFrame",
+
+        onDone: () => {
+
+            btn.disabled = false;
+
+            if (buttonSpan && originalButtonText) {
+
+                buttonSpan.textContent = originalButtonText;
+
+            }
+
+        }
+
+    });
 
 }
